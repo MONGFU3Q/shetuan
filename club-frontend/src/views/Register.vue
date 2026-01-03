@@ -42,40 +42,19 @@ const confirmPassword = ref('')
 
 const handleRegister = async () => {
   if(!form.value.username || !form.value.password) return ElMessage.warning('请输入账号密码')
-  
   if(form.value.password !== confirmPassword.value) return ElMessage.warning('两次输入密码不一致')
   
   loading.value = true
-  
   try {
-    // 模拟注册 - 直接写入localStorage
-    const existingUsers = JSON.parse(localStorage.getItem('mockUsers') || '[]');
-    
-    // 检查用户名是否已存在
-    if (existingUsers.some(user => user.username === form.value.username)) {
-      ElMessage.error('用户名已存在');
-      return;
-    }
-    
-    const newUser = {
-      id: existingUsers.length + 1,
-      username: form.value.username,
-      password: form.value.password,
-      role: 'student'
-    };
-    
-    existingUsers.push(newUser);
-    localStorage.setItem('mockUsers', JSON.stringify(existingUsers));
-    
-    ElMessage.success('注册成功，请登录');
-    
+    // 调用后端注册接口
+    await request.post('/register', form.value)
+    ElMessage.success('注册成功，请登录')
     // 注册成功后跳转回登录页
-    router.push('/login');
+    router.push('/login')
   } catch (err) {
-    console.error(err);
-    ElMessage.error('注册失败');
+    console.error(err)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>

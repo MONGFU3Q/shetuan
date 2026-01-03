@@ -78,64 +78,27 @@ import request from '../utils/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const role = localStorage.getItem('role')
-// 在data部分添加模拟数据
-const events = ref([
-  { 
-    id: 1, 
-    title: '迎新晚会', 
-    clubName: '音乐社', 
-    content: '欢迎新生加入，有精彩表演', 
-    location: '学生活动中心', 
-    participantIds: [2, 3] 
-  },
-  { 
-    id: 2, 
-    title: '篮球比赛', 
-    clubName: '篮球社', 
-    content: '校内篮球联赛', 
-    location: '体育馆', 
-    participantIds: [1, 2] 
-  },
-  { 
-    id: 3, 
-    title: '编程讲座', 
-    clubName: '计算机协会', 
-    content: 'Python入门讲座', 
-    location: '计算机楼201', 
-    participantIds: [2] 
-  },
-]);
-
-// 模拟我的社团数据
-const myClubs = ref([
-  { id: 1, name: '计算机协会' },
-  { id: 2, name: '篮球社' },
-]);
-
+const events = ref([])
+const myClubs = ref([]) // 存储当前社长管理的社团列表
 const dialogVisible = ref(false)
 const form = ref({ title: '', content: '', location: '', clubId: null, clubName: '' })
 
-// 修改fetchEvents函数
+// 获取所有活动
 const fetchEvents = async () => {
   try {
-    // 直接使用模拟数据，不发送请求
-    console.log('使用模拟活动数据');
-  } catch (error) { 
-    console.error(error) 
-  }
+    const res = await request.get('/events')
+    events.value = res.data
+  } catch (error) { console.error(error) }
 }
 
-// 修改fetchMyManagedClubs函数
+// 获取当前社长管理的社团 (用于下拉框)
 const fetchMyManagedClubs = async () => {
   const userId = localStorage.getItem('userId')
   if (!userId) return
-  
   try {
-    // 直接使用模拟数据
-    console.log('使用模拟社团数据');
-  } catch (error) { 
-    console.error(error) 
-  }
+    const res = await request.get(`/clubs/my-managed?managerId=${userId}`)
+    myClubs.value = res.data
+  } catch (error) { console.error(error) }
 }
 
 // 打开弹窗时，自动加载社团列表
@@ -154,63 +117,39 @@ const handleClubChange = (val) => {
   }
 }
 
-// 修改submitEvent函数
+// 提交发布
 const submitEvent = async () => {
   if (!form.value.clubId) {
     return ElMessage.warning('请选择主办社团')
   }
-  
   try {
-    // 模拟添加新活动
-    const newEvent = {
-      id: events.value.length + 1,
-      title: form.value.title,
-      clubName: form.value.clubName,
-      content: form.value.content,
-      location: form.value.location,
-      participantIds: []
-    };
-    
-    events.value.push(newEvent);
-    ElMessage.success('发布成功');
-    dialogVisible.value = false;
-  } catch (error) { 
-    console.error(error) 
-  }
+    await request.post('/events', form.value)
+    ElMessage.success('发布成功')
+    dialogVisible.value = false
+    fetchEvents()
+  } catch (error) { console.error(error) }
 }
 
-// 修改joinEvent函数
 const joinEvent = async (eventId) => {
-  const currentUserId = parseInt(localStorage.getItem('userId') || '0');
+  const currentUserId = localStorage.getItem('userId');
   if (!currentUserId) return ElMessage.error('请先登录');
-  
   try {
-    // 模拟报名
-    const event = events.value.find(e => e.id === eventId);
-    if (event && !event.participantIds.includes(currentUserId)) {
-      event.participantIds.push(currentUserId);
-      ElMessage.success('报名成功');
-    } else {
-      ElMessage.warning('您已报名此活动');
-    }
-  } catch (error) { 
-    console.error(error) 
-  }
+    await request.post(`/events/${eventId}/join`, { userId: currentUserId })
+    ElMessage.success('报名成功')
+    fetchEvents()
+  } catch (error) { console.error(error) }
 }
 
-// 修改handleDelete函数
 const handleDelete = (eventId) => {
   ElMessageBox.confirm('确定要删除这个活动吗？', '警告', { type: 'warning' })
-    .then(async () => {
-      try {
-        // 模拟删除
-        const index = events.value.findIndex(e => e.id === eventId);
-        if (index !== -1) {
-          events.value.splice(index, 1);
-          ElMessage.success('删除成功');
-        }
-      } catch (error) {}
-    })
+  .then(async () => {
+    try {
+      const currentUserId = localStorage.getItem('userId');
+      await request.delete(`/events/${eventId}`, { params: { userId: currentUserId } })
+      ElMessage.success('删除成功')
+      fetchEvents()
+    } catch (error) {}
+  })
 }
 
 onMounted(fetchEvents)

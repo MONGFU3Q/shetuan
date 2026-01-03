@@ -25,12 +25,7 @@ import { ref, onMounted } from 'vue'
 import request from '../utils/request'
 import { ElMessage } from 'element-plus'
 
-const members = ref([
-  { id: 1, studentName: '张三', status: 'APPROVED' },
-  { id: 2, studentName: '李四', status: 'PENDING' },
-  { id: 3, studentName: '王五', status: 'APPROVED' },
-  { id: 4, studentName: '赵六', status: 'PENDING' },
-]);
+const members = ref([])
 const userId = localStorage.getItem('userId')
 
 const fetchMembers = async () => {
@@ -41,12 +36,9 @@ const fetchMembers = async () => {
 }
 
 const approve = async (memberId) => {
-  // 模拟批准
-  const member = members.value.find(m => m.id === memberId);
-  if (member) {
-    member.status = 'APPROVED';
-    ElMessage.success('操作成功');
-  }
+  await request.put(`/clubs/members/${memberId}/approve`)
+  ElMessage.success('操作成功')
+  fetchMembers()
 }
 
 onMounted(fetchMembers)

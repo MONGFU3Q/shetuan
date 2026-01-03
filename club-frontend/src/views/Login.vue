@@ -39,44 +39,24 @@ const router = useRouter()
 const loading = ref(false)
 const form = ref({ username: '', password: '' })
 
-// 在script部分修改handleLogin函数
 const handleLogin = async () => {
   if(!form.value.username || !form.value.password) return ElMessage.warning('请输入账号密码')
   
   loading.value = true
-  
   try {
-    // 使用模拟登录（不再真正请求后端）
-    const mockUsers = [
-      { username: 'admin', password: 'admin123', role: 'admin', userId: 1 },
-      { username: 'student1', password: '123456', role: 'student', userId: 2 },
-      { username: 'manager1', password: '123456', role: 'manager', userId: 3 },
-    ];
-    
-    const user = mockUsers.find(u => 
-      u.username === form.value.username && u.password === form.value.password
-    );
-    
-    if (user) {
-      // 模拟生成token
-      const mockToken = 'mock-jwt-token-' + Date.now();
-      
-      // 保存到localStorage
-      localStorage.setItem('token', mockToken);
-      localStorage.setItem('role', user.role);
-      localStorage.setItem('username', user.username);
-      localStorage.setItem('userId', user.userId.toString());
-      
-      ElMessage.success('登录成功');
-      router.push('/home');
-    } else {
-      ElMessage.error('用户名或密码错误');
-    }
+    const res = await request.post('/login', form.value)
+    // 根据后端返回结构保存数据
+    localStorage.setItem('token', res.data.token)
+    localStorage.setItem('role', res.data.role)
+    localStorage.setItem('username', res.data.username)
+    localStorage.setItem('userId', res.data.userId)
+    ElMessage.success('登录成功')
+    router.push('/home')
   } catch (err) {
-    console.error(err);
-    ElMessage.error('登录失败');
+    // 错误已在 request.js 拦截处理
+    console.error(err)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 </script>

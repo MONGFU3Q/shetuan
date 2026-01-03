@@ -37,12 +37,7 @@ import { ref, onMounted } from 'vue'
 import request from '../utils/request'
 import { ElMessage } from 'element-plus'
 
-const users = ref([
-  { id: 1, username: 'admin', role: 'admin', banned: false },
-  { id: 2, username: 'student1', role: 'student', banned: false },
-  { id: 3, username: 'manager1', role: 'manager', banned: true },
-  { id: 4, username: 'student2', role: 'student', banned: false },
-]);
+const users = ref([])
 
 const fetchUsers = async () => {
   const res = await request.get('/admin/users')
@@ -50,12 +45,9 @@ const fetchUsers = async () => {
 }
 
 const toggleBan = async (row) => {
-  // 模拟封禁/解封
-  const user = users.value.find(u => u.id === row.id);
-  if (user && user.role !== 'admin') {
-    user.banned = !user.banned;
-    ElMessage.success('操作成功');
-  }
+  await request.put(`/admin/users/${row.id}/ban`)
+  ElMessage.success('操作成功')
+  fetchUsers() // 刷新列表
 }
 
 onMounted(fetchUsers)

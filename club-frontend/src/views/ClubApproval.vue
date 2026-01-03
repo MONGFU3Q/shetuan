@@ -31,11 +31,7 @@ import { ref, onMounted } from 'vue'
 import request from '../utils/request'
 import { ElMessage } from 'element-plus'
 
-const applications = ref([
-  { id: 1, applicantName: '张三', name: '摄影俱乐部', category: '艺术', description: '热爱摄影，希望找到志同道合的朋友' },
-  { id: 2, applicantName: '李四', name: '舞蹈社', category: '体育', description: '推广舞蹈文化，丰富校园生活' },
-  { id: 3, applicantName: '王五', name: '书法协会', category: '艺术', description: '传承中华书法文化' },
-]);
+const applications = ref([])
 const loading = ref(false)
 
 const fetchApplications = async () => {
@@ -50,37 +46,23 @@ const fetchApplications = async () => {
   }
 }
 
-// 修改handleApprove函数
 const handleApprove = async (id) => {
   try {
-    // 模拟审批通过
-    const app = applications.value.find(item => item.id === id);
-    if (app) {
-      app.status = 'approved';
-      ElMessage.success('审批通过');
-      
-      // 从列表中移除已审批的申请
-      applications.value = applications.value.filter(item => item.id !== id);
-    }
+    const res = await request.post(`/admin/applications/${id}/approve`)
+    ElMessage.success(res.data || '审批通过')
+    fetchApplications() // 刷新列表
   } catch (error) {
-    console.error(error);
+    console.error(error)
   }
 }
 
-// 修改handleReject函数
 const handleReject = async (id) => {
   try {
-    // 模拟驳回
-    const app = applications.value.find(item => item.id === id);
-    if (app) {
-      app.status = 'rejected';
-      ElMessage.warning('已驳回');
-      
-      // 从列表中移除已驳回的申请
-      applications.value = applications.value.filter(item => item.id !== id);
-    }
+    await request.post(`/admin/applications/${id}/reject`)
+    ElMessage.warning('已驳回')
+    fetchApplications()
   } catch (error) {
-    console.error(error);
+    console.error(error)
   }
 }
 
